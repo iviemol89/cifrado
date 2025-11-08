@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cifrado / Descifrado</title>
+<style>
+:root{
+  --bg-dark:#1e1e1e;
+  --panel-dark:#262626;
+  --text-dark:#e8e8e8;
+  --accent-dark:#333;
+  --primary-green:#2aa653;
+  --primary-red:#e03e3e;
+  --primary-blue:#3478f6;
+  --radius:12px;
+  --title-size:28px;
+}
+
+body{
+  margin:0;
+  font-family:"Segoe UI", Roboto, Arial, sans-serif;
+  background:var(--bg-dark);
+  color:var(--text-dark);
+}
+
+.wrap{
+  max-width:720px;
+  margin:24px auto;
+  padding:18px;
+}
+
+.card{
+  background:var(--panel-dark);
+  border-radius:var(--radius);
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.title{
+  text-align:center;
+  font-size:var(--title-size);
+  font-weight:700;
+  margin:0;
+}
+
+.divider{
+  height:3px;
+  width:50%;
+  margin:0 auto;
+  border-radius:6px;
+  background:#555;
+}
+
+label{font-size:13px;margin-bottom:6px;}
+textarea,input[type="text"]{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+  outline:none;
+  background:var(--accent-dark);
+  color:var(--text-dark);
+  box-sizing:border-box;
+  resize:vertical;
+}
+
+button{
+  cursor:pointer;
+  border:0;
+  border-radius:10px;
+  font-weight:700;
+  font-size:16px;
+  height:48px;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  text-align:center;
+}
+button:active{
+  transform:scale(0.96);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+#btnCifrar{
+  background: var(--primary-red);
+  color: #fff;
+}
+#btnCifrar:hover{ filter: brightness(1.12); }
+
+#btnDescifrar{
+  background: var(--primary-green);
+  color:#fff;
+}
+#btnDescifrar:hover{ filter: brightness(1.12); }
+
+.btn-primary-blue{
+  background: var(--primary-blue);
+  color:#fff;
+}
+.btn-primary-blue:hover{ filter: brightness(1.12); }
+
+.button-row{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:12px;
+  margin-top:12px;
+}
+
+.button-row button{
+  width:100%;
+}
+
+.flex-right {
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+
+.button-pegado {
+  background: var(--primary-blue);
+  color:#fff;
+  width:35%;
+  height:40px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: all 0.15s ease-in-out;
+  margin-left:8px;
+}
+.button-pegado:hover { filter: brightness(1.12); }
+
+#info{
+  text-align:center;
+  color:#f0ad4e;
+  font-weight:600;
+  margin-top:12px;
+  min-height:18px;
+}
+
+#copy-hint{
+  color:red;
+  font-size:12px;
+  margin-top:4px;
+  text-align:left;
+}
+
+.result-box{
+  border-radius:10px;
+  padding:12px;
+  min-height:80px;
+  max-height:400px;
+  overflow:auto;
+  white-space:pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-size:15px;
+  background:#333333; /* fondo un poquito más claro */
+  color:#fff;
+  width:100%;
+  box-sizing:border-box;
+  cursor:pointer;
+}
+
+@media (max-width:560px){
+  .wrap{margin:12px;}
+  .title{font-size:24px;}
+  button{height:44px;font-size:15px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="title">Cifrado / Descifrado</div>
+    <div class="divider"></div>
+
+    <div>
+      <label for="inputText">Mensaje</label>
+      <textarea id="inputText" rows="4" placeholder="Escribe aquí el mensaje..."></textarea>
+      <div class="flex-right">
+        <button id="btnPegar" class="button-pegado">Pegar</button>
+        <button id="btnLimpiar" class="button-pegado">Limpiar</button>
+      </div>
+    </div>
+
+    <div>
+      <label for="key">Clave secreta</label>
+      <input type="text" id="key" placeholder="Escribe una palabra clave..." />
+    </div>
+
+    <div class="button-row">
+      <button id="btnCifrar">Cifrar</button>
+      <button id="btnDescifrar">Descifrar</button>
+    </div>
+
+    <div id="info"></div>
+
+    <div>
+      <label>Resultado</label>
+      <div id="output" class="result-box" tabindex="0" aria-live="polite"></div>
+      <div id="copy-hint">Haz clic en el resultado para copiarlo (solo un click, no mantener pulsado)</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const input = document.getElementById('inputText');
+  const keyInput = document.getElementById('key');
+  const output = document.getElementById('output');
+  const info = document.getElementById('info');
+
+  const alphabet = "abcdefghijklmnñopqrstuvwxyz";
+
+  function mod(n,m){ return ((n%m)+m)%m; }
+
+  function vigenereCipher(text,key,encrypt=true){
+    if(!text || !key) return "";
+    let res = "";
+    const keyLower = key.toLowerCase();
+    let j=0;
+    for(let ch of text){
+      const lower = ch.toLowerCase();
+      const idx = alphabet.indexOf(lower);
+      if(idx === -1){ res+=ch; }
+      else{
+        const shift = alphabet.indexOf(keyLower[j % keyLower.length]);
+        const ni = encrypt ? mod(idx + shift, alphabet.length) : mod(idx - shift, alphabet.length);
+        const nc = alphabet[ni];
+        res += (ch===ch.toUpperCase())?nc.toUpperCase():nc;
+        j++;
+      }
+    }
+    return res;
+  }
+
+  function toBase64(text){ return btoa(unescape(encodeURIComponent(text))); }
+  function fromBase64(text){
+    try { return decodeURIComponent(escape(atob(text))); }
+    catch(e){ return null; } // devuelve null si no es Base64 válido
+  }
+
+  function showResult(text){ output.textContent=text; }
+
+  function showInfo(msg){
+    info.textContent = msg;
+    if(msg){ setTimeout(()=>{ info.textContent=""; },3000); }
+  }
+
+  document.getElementById('btnCifrar').addEventListener('click',function(){
+    const message = input.value.trim();
+    const key = keyInput.value.trim();
+    if(!message){ showInfo("Ingrese un mensaje."); return; }
+    if(!key){ showInfo("Ingrese una clave secreta."); return; }
+    const ciphered = vigenereCipher(message,key,true);
+    showResult(toBase64(ciphered));
+    showInfo("Texto cifrado.");
+  });
+
+  document.getElementById('btnDescifrar').addEventListener('click',function(){
+    const message = input.value.trim();
+    const key = keyInput.value.trim();
+    if(!message){ showInfo("Ingrese un mensaje."); return; }
+    if(!key){ showInfo("Ingrese una clave secreta."); return; }
+
+    const decoded = fromBase64(message);
+    if(decoded === null){ 
+        showResult("Texto no válido"); // mensaje simplificado
+        return;
+    }
+
+    const deciphered = vigenereCipher(decoded,key,false);
+    showResult(deciphered);
+    showInfo("Texto descifrado.");
+  });
+
+  document.getElementById('btnLimpiar').addEventListener('click',function(){
+    input.value="";
+    keyInput.value="";
+    output.textContent="";
+    info.textContent="";
+  });
+
+  document.getElementById('btnPegar').addEventListener('click', async function(){
+    try{
+      const clipText = await navigator.clipboard.readText();
+      input.value = clipText || "";
+      showInfo(clipText ? "Texto pegado correctamente." : "El portapapeles está vacío.");
+    }catch(e){
+      showInfo("No se pudo acceder al portapapeles.");
+    }
+  });
+
+  output.addEventListener('click', async function(){
+    const text = output.textContent || "";
+    if(!text){ showInfo("No hay texto para copiar."); return; }
+    try{
+      await navigator.clipboard.writeText(text);
+      showInfo("Texto copiado al portapapeles.");
+    }catch(e){
+      showInfo("No se pudo copiar automáticamente.");
+    }
+  });
+
+})();
+</script>
+
+<!-- Registro de cambios actualizado -->
+<!--
+1. Añadido botón "Pegar" debajo del textarea, alineado a la derecha.
+2. Botón "Pegar" más pequeño: ancho 35%, altura 40px.
+3. Clic en el cuadro de resultado copia el texto al portapapeles automáticamente.
+4. Eliminado botón "Copiar"; botón "Limpiar" a la derecha con estilo de "Pegar".
+5. Botón "Limpiar todo" renombrado a "Limpiar", manteniendo estilo y funcionalidad.
+6. Mensaje debajo del resultado actualizado para indicar que es un click para copiar y no dejar pulsado.
+7. Mensaje de info al copiar el resultado simplificado: "Texto copiado al portapapeles."
+8. Descifrado inválido muestra "Texto no válido" en lugar de caracteres extraños.
+9. Fondo del recuadro de resultado más claro (#2a2a2a).
+10. Fondo del recuadro de resultado aún más claro (#333333).
+-->
+</body>
+</html>
