@@ -75,7 +75,12 @@
     return atob(base64);
   };
 
-  const qr = new QRCode("qrcode", { width: 200, height: 200 });
+  const qr = new QRCode("qrcode", { 
+    width: 256, 
+    height: 256, 
+    correctLevel: QRCode.CorrectLevel.H 
+  });
+  
   const html5QrCode = new Html5Qrcode("reader");
 
   async function deriveKey(password, salt) {
@@ -117,8 +122,23 @@
   };
 
   function downloadQR() {
-    const canvas = document.querySelector("#qrcode canvas");
-    if(canvas) { const link = document.createElement('a'); link.download = 'nyxcrypt.png'; link.href = canvas.toDataURL("image/png"); link.click(); }
+    const qrcodeDiv = document.getElementById('qrcode');
+    const canvas = qrcodeDiv.querySelector("canvas");
+    if (canvas) {
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = 512;
+      finalCanvas.height = 512;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+      ctx.drawImage(canvas, 0, 0, 512, 512);
+      const link = document.createElement('a');
+      link.download = 'nyxcrypt.png';
+      link.href = finalCanvas.toDataURL("image/png", 1.0);
+      link.click();
+    } else {
+      alert("Primero debes generar un QR cifrando un mensaje.");
+    }
   }
 
   function startScanner() {
