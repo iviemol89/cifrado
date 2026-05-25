@@ -25,7 +25,9 @@
   #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; }
   .extra-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
   .btn-gold { background: #d4af37; color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  #reader { display: none; }
+  
+  /* El lector estará oculto, y se mostrará al activar */
+  #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid #d4af37; }
 </style>
 </head>
 <body>
@@ -122,8 +124,13 @@
   }
 
   function startScanner() {
+    const reader = document.getElementById('reader');
+    reader.style.display = 'block'; // Mostramos el recuadro
     html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-      (text) => { document.getElementById('inputText').value = text; html5QrCode.stop().catch(()=>{}); });
+      (text) => { 
+        document.getElementById('inputText').value = text; 
+        html5QrCode.stop().then(() => { reader.style.display = 'none'; }); 
+      });
   }
 
   function scanFile(event) {
