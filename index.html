@@ -125,13 +125,16 @@
     const qrcodeDiv = document.getElementById('qrcode');
     const canvas = qrcodeDiv.querySelector("canvas");
     if (canvas) {
+      const size = 512;
+      const margin = 20; // Borde fino de 20px
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = 512;
-      finalCanvas.height = 512;
+      finalCanvas.width = size;
+      finalCanvas.height = size;
       const ctx = finalCanvas.getContext('2d');
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-      ctx.drawImage(canvas, 0, 0, 512, 512);
+      ctx.fillRect(0, 0, size, size);
+      const drawSize = size - (margin * 2);
+      ctx.drawImage(canvas, margin, margin, drawSize, drawSize);
       const link = document.createElement('a');
       link.download = 'nyxcrypt.png';
       link.href = finalCanvas.toDataURL("image/png", 1.0);
