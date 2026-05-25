@@ -22,7 +22,7 @@
   #btnCifrar { background: #8b0000; color: white; }
   #btnDescifrar { background: #006400; color: white; }
   #output { background: #000; padding: 15px; margin-top: 15px; border-radius: 8px; border: 1px solid #444; font-size: 14px; word-break: break-all; min-height: 50px; color: #fff; }
-  #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; }
+  #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; min-height: 220px; }
   .extra-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
   .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
   #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid var(--gold); }
@@ -33,39 +33,52 @@
 <div class="card">
   <h2>NYX Crypt</h2>
   <div class="subtitle">Mensajes ocultos con clave secreta</div>
-  
-  <label>Mensaje (o texto cifrado)</label>
   <textarea id="inputText" rows="3"></textarea>
-  
-  <label>Clave secreta (mínimo 8 caracteres)</label>
+  <label>Clave secreta (mín. 8 caracteres)</label>
   <div class="password-wrapper">
     <input type="password" id="key" />
     <button type="button" id="togglePassword" onclick="toggleVisibility()">👁️</button>
   </div>
-  
   <div class="button-row">
     <button id="btnCifrar">Cifrar</button>
     <button id="btnDescifrar">Descifrar</button>
   </div>
-
   <div id="output"></div>
   <div id="qrcode"></div>
-  
   <div class="extra-buttons">
     <button class="btn-gold" onclick="downloadQR()">📥 Descargar QR</button>
-    <button class="btn-gold" onclick="startScanner()">📷 Escanear con Cámara</button>
     <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="scanFile(event)">
     <button class="btn-gold" onclick="document.getElementById('fileInput').click()">📁 Cargar QR desde Archivo</button>
+    <button class="btn-gold" onclick="startScanner()">📷 Escanear con Cámara</button>
   </div>
   <div id="reader"></div>
 </div>
 
 <script>
+  let qrObj = null;
+  const qrContainer = document.getElementById('qrcode');
+  const html5QrCode = new Html5Qrcode("reader");
+
+  function initQR() {
+    qrContainer.innerHTML = "";
+    qrObj = new QRCode(qrContainer, { width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
+  }
+
+  function clearUI() {
+    document.getElementById('output').textContent = "";
+    initQR();
+  }
+
+  async function stopScanner() {
+    if (html5QrCode.isScanning) {
+      await html5QrCode.stop().catch(() => {});
+    }
+    document.getElementById('reader').style.display = 'none';
+  }
+
   function toggleVisibility() {
     const key = document.getElementById('key');
-    const btn = document.getElementById('togglePassword');
     key.type = (key.type === "password") ? "text" : "password";
-    btn.textContent = (key.type === "password") ? "👁️" : "🙈";
   }
 
   const toBase64URL = (b) => b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -75,14 +88,6 @@
     return atob(base64);
   };
 
-  const qr = new QRCode("qrcode", { 
-    width: 256, 
-    height: 256, 
-    correctLevel: QRCode.CorrectLevel.H 
-  });
-  
-  const html5QrCode = new Html5Qrcode("reader");
-
   async function deriveKey(password, salt) {
     const encoder = new TextEncoder();
     const baseKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
@@ -91,75 +96,69 @@
 
   document.getElementById('btnCifrar').onclick = async () => {
     const keyVal = document.getElementById('key').value;
-    if (keyVal.length < 8) { alert("La clave debe tener al menos 8 caracteres."); return; }
+    const textVal = document.getElementById('inputText').value;
+    if (keyVal.length < 8 || !textVal.trim()) { alert("Revisa clave y mensaje"); return; }
     try {
-      const text = document.getElementById('inputText').value;
       const salt = crypto.getRandomValues(new Uint8Array(16));
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const key = await deriveKey(keyVal, salt);
-      const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
+      const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(textVal));
       const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
       combined.set(salt); combined.set(iv, salt.length); combined.set(new Uint8Array(encrypted), salt.length + iv.length);
       const b64url = toBase64URL(btoa(String.fromCharCode(...combined)));
       document.getElementById('output').textContent = b64url;
-      qr.makeCode(b64url);
+      qrObj.makeCode(b64url);
     } catch(e) { alert("Error al cifrar"); }
   };
 
   document.getElementById('btnDescifrar').onclick = async () => {
     const keyVal = document.getElementById('key').value;
-    if (keyVal.length < 8) { alert("La clave debe tener al menos 8 caracteres."); return; }
+    const textVal = document.getElementById('inputText').value;
     try {
-      const base64 = fromBase64URL(document.getElementById('inputText').value);
+      const base64 = fromBase64URL(textVal);
       const data = Uint8Array.from(base64, c => c.charCodeAt(0));
-      const salt = data.slice(0, 16);
-      const iv = data.slice(16, 28);
-      const encrypted = data.slice(28);
-      const key = await deriveKey(keyVal, salt);
-      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encrypted);
+      const key = await deriveKey(keyVal, data.slice(0, 16));
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: data.slice(16, 28) }, key, data.slice(28));
       document.getElementById('output').textContent = new TextDecoder().decode(decrypted);
-    } catch (e) { alert("Clave incorrecta o formato inválido."); }
+      initQR();
+    } catch (e) { alert("Clave incorrecta o formato inválido"); }
   };
 
   function downloadQR() {
-    const qrcodeDiv = document.getElementById('qrcode');
-    const canvas = qrcodeDiv.querySelector("canvas");
+    const canvas = qrContainer.querySelector("canvas");
     if (canvas) {
-      const size = 512;
-      const margin = 20; // Borde fino de 20px
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = size;
-      finalCanvas.height = size;
+      finalCanvas.width = 512; finalCanvas.height = 512;
       const ctx = finalCanvas.getContext('2d');
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, size, size);
-      const drawSize = size - (margin * 2);
-      ctx.drawImage(canvas, margin, margin, drawSize, drawSize);
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 512, 512);
+      ctx.drawImage(canvas, 20, 20, 472, 472);
       const link = document.createElement('a');
       link.download = 'nyxcrypt.png';
       link.href = finalCanvas.toDataURL("image/png", 1.0);
       link.click();
-    } else {
-      alert("Primero debes generar un QR cifrando un mensaje.");
-    }
+    } else { alert("No hay QR"); }
   }
 
-  function startScanner() {
-    const reader = document.getElementById('reader');
-    reader.style.display = 'block';
-    html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250, aspectRatio: 1.0 }, 
+  async function startScanner() {
+    await stopScanner();
+    clearUI();
+    document.getElementById('reader').style.display = 'block';
+    html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, 
       (text) => { 
         document.getElementById('inputText').value = text; 
-        html5QrCode.stop().then(() => { reader.style.display = 'none'; }); 
-      }).catch(err => { alert("Error de cámara: " + err); reader.style.display = 'none'; });
+        stopScanner(); 
+      });
   }
 
-  function scanFile(event) {
+  async function scanFile(event) {
     const file = event.target.files[0];
-    html5QrCode.scanFile(file, true).then(text => { 
-      document.getElementById('inputText').value = text; 
-    }).catch(err => alert("No se pudo leer el QR"));
+    if(!file) return;
+    await stopScanner();
+    clearUI();
+    html5QrCode.scanFile(file, true).then(text => { document.getElementById('inputText').value = text; });
   }
+
+  initQR(); // Inicialización al cargar la página
 </script>
 </body>
 </html>
