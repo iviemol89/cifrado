@@ -11,10 +11,10 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; padding: 10px; }
   .card { background: var(--panel); padding: 20px; border-radius: 16px; width: 100%; max-width: 500px; border: 1px solid #333; }
-  h2 { text-align: center; color: #d4af37; margin: 0 0 5px 0; }
+  h2 { text-align: center; color: var(--gold); margin: 0 0 5px 0; }
   .subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 20px; }
   label { font-size: 13px; color: #cccccc; margin-top: 15px; margin-bottom: 5px; display: block; }
-  textarea, input { width: 100%; padding: 12px; border-radius: 8px; background: #2d2d3a; color: white; border: 1px solid #444; font-size: 16px; }
+  textarea, input { width: 100%; padding: 12px; border-radius: 8px; background: var(--accent); color: white; border: 1px solid #444; font-size: 16px; }
   .password-wrapper { position: relative; display: flex; align-items: center; }
   #togglePassword { position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 18px; }
   .button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
@@ -24,10 +24,8 @@
   #output { background: #000; padding: 15px; margin-top: 15px; border-radius: 8px; border: 1px solid #444; font-size: 14px; word-break: break-all; min-height: 50px; color: #fff; }
   #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; }
   .extra-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-  .btn-gold { background: #d4af37; color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  
-  /* El lector estará oculto, y se mostrará al activar */
-  #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid #d4af37; }
+  .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+  #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid var(--gold); }
 </style>
 </head>
 <body>
@@ -125,12 +123,12 @@
 
   function startScanner() {
     const reader = document.getElementById('reader');
-    reader.style.display = 'block'; // Mostramos el recuadro
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+    reader.style.display = 'block';
+    html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250, aspectRatio: 1.0 }, 
       (text) => { 
         document.getElementById('inputText').value = text; 
         html5QrCode.stop().then(() => { reader.style.display = 'none'; }); 
-      });
+      }).catch(err => { alert("Error de cámara: " + err); reader.style.display = 'none'; });
   }
 
   function scanFile(event) {
