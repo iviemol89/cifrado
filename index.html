@@ -26,8 +26,6 @@
   #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; min-height: 220px; }
   .extra-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
   .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  
-  /* REVERTIDO: Diseño original del reader para mantener proporciones */
   #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid var(--gold); }
 </style>
 </head>
@@ -139,6 +137,11 @@
 
   async function startScanner() {
     if (html5QrCode.isScanning) await html5QrCode.stop();
+    // Limpieza automática
+    document.getElementById('inputText').value = "";
+    document.getElementById('output').textContent = "";
+    initQR();
+    
     document.getElementById('reader').style.display = 'block';
     html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => { 
         document.getElementById('inputText').value = text; 
@@ -148,7 +151,6 @@
 
   async function scanFile(input) {
     if(!input.files[0]) return;
-    // Cierre automático al cargar archivo
     if (html5QrCode.isScanning) { await html5QrCode.stop(); document.getElementById('reader').style.display = 'none'; }
     initQR(); document.getElementById('output').textContent = "";
     html5QrCode.scanFile(input.files[0], true).then(text => { document.getElementById('inputText').value = text; input.value = ""; }).catch(err => { alert("No se pudo leer"); input.value = ""; });
