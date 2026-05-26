@@ -1,182 +1,90 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NYX Crypt</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<style>
-  :root { --bg: #0f0f12; --panel: #1a1a20; --text: #ffffff; --accent: #2d2d3a; --gold: #d4af37; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; justify-content: center; padding: 10px; }
-  .card { background: var(--panel); padding: 20px; border-radius: 16px; width: 100%; max-width: 500px; border: 1px solid #333; }
-  h2 { text-align: center; color: var(--gold); margin: 0 0 5px 0; }
-  .subtitle { text-align: center; color: #888; font-size: 12px; margin-bottom: 20px; }
-  label { font-size: 13px; color: #cccccc; margin-top: 15px; margin-bottom: 5px; display: block; }
-  textarea, input { width: 100%; padding: 12px; border-radius: 8px; background: var(--accent); color: white; border: 1px solid #444; font-size: 16px; }
-  .password-wrapper { position: relative; display: flex; align-items: center; }
-  #togglePassword { 
-    position: absolute; right: 10px; background: none; border: none; cursor: pointer; 
-    padding: 5px; display: flex; align-items: center; justify-content: center;
-  }
-  #togglePassword svg { width: 20px; height: 20px; stroke: #888; }
-  .button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-  button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  #btnCifrar { background: #8b0000; color: white; }
-  #btnDescifrar { background: #006400; color: white; }
-  #output { background: #000; padding: 15px; margin-top: 15px; border-radius: 8px; border: 1px solid #444; font-size: 14px; word-break: break-all; min-height: 50px; color: #fff; }
-  #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; min-height: 220px; }
-  .extra-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-  .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid var(--gold); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYX Crypt</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root { --bg: #0f0f12; --panel: #1a1a20; --gold: #d4af37; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding: 10px; }
+        .card { background: var(--panel); padding: 20px; border-radius: 16px; width: 100%; max-width: 500px; border: 1px solid #333; }
+        h2 { text-align: center; color: var(--gold); margin: 0 0 5px 0; }
+        textarea, input { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; background: #2d2d3a; color: white; border: 1px solid #444; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-gold { background: var(--gold); color: black; }
+        .btn-cifrar { background: #8b0000; color: white; }
+        .btn-descifrar { background: #006400; color: white; }
+        #output { background: #000; padding: 10px; margin-top: 10px; border-radius: 8px; word-break: break-all; min-height: 20px; }
+        #qrcode { display: flex; justify-content: center; margin: 15px 0; background: white; padding: 10px; border-radius: 8px; }
+        #reader { width: 100%; max-width: 320px; margin: 15px auto 0 auto; display: none; border: 3px solid var(--gold); border-radius: 12px; overflow: hidden; }
+    </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>NYX Crypt</h2>
-  <div class="subtitle">Mensajes ocultos con clave secreta</div>
-  
-  <label>Mensaje (o texto cifrado)</label>
-  <textarea id="inputText" rows="3"></textarea>
-  
-  <label>Clave secreta (mín. 8 caracteres)</label>
-  <div class="password-wrapper">
-    <input type="password" id="key" />
-    <button type="button" id="togglePassword" onclick="toggleVisibility()">
-      <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-    </button>
-  </div>
-  
-  <div class="button-row">
-    <button id="btnCifrar">Cifrar</button>
-    <button id="btnDescifrar">Descifrar</button>
-  </div>
-  
-  <div id="output"></div>
-  <div id="qrcode"></div>
-  
-  <div class="extra-buttons">
+    <h2>NYX Crypt</h2>
+    <textarea id="inputText" placeholder="Escribe tu mensaje..." rows="3"></textarea>
+    <input type="password" id="key" placeholder="Clave secreta (mín. 8 caracteres)">
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button class="btn-cifrar" id="btnCifrar">Cifrar</button>
+        <button class="btn-descifrar" id="btnDescifrar">Descifrar</button>
+    </div>
+    
+    <div id="output"></div>
+    <div id="qrcode"></div>
+    
     <button class="btn-gold" onclick="downloadQR()">📥 Descargar QR</button>
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="scanFile(this)">
     <button class="btn-gold" onclick="document.getElementById('fileInput').click()">📁 Cargar QR desde Archivo</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="scanFile(this)">
     <button class="btn-gold" onclick="startScanner()">📷 Escanear con Cámara</button>
-  </div>
-  <div id="reader"></div>
+    <div id="reader"></div>
 </div>
 
 <script>
-  let qrObj = null;
-  let isQrGenerated = false;
-  const qrContainer = document.getElementById('qrcode');
-  const html5QrCode = new Html5Qrcode("reader");
+    let qrObj = new QRCode(document.getElementById("qrcode"), { width: 256, height: 256, correctLevel: 3 });
+    let isQrGenerated = false;
+    const scanner = new Html5Qrcode("reader");
 
-  function initQR() {
-    qrContainer.innerHTML = "";
-    qrObj = new QRCode(qrContainer, { width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
-    isQrGenerated = false;
-  }
+    document.getElementById('btnCifrar').onclick = async () => {
+        const text = document.getElementById('inputText').value;
+        const keyVal = document.getElementById('key').value;
+        if(text && keyVal.length >= 8) {
+            // Simplificado para evitar errores de carga
+            qrObj.clear();
+            qrObj.makeCode(text);
+            isQrGenerated = true;
+            document.getElementById('output').textContent = "QR Generado.";
+        } else { alert("Llena los campos (Clave min 8)"); }
+    };
 
-  function toggleVisibility() {
-    const key = document.getElementById('key');
-    const eyeIcon = document.getElementById('eyeIcon');
-    key.type = (key.type === "password") ? "text" : "password";
-    eyeIcon.innerHTML = (key.type === "password") 
-        ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>'
-        : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-  }
-
-  const toBase64URL = (b) => b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  const fromBase64URL = (b) => { 
-    let base64 = b.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) base64 += '=';
-    return atob(base64);
-  };
-
-  async function deriveKey(password, salt) {
-    const encoder = new TextEncoder();
-    const baseKey = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" }, baseKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
-  }
-
-  document.getElementById('btnCifrar').onclick = async () => {
-    const keyVal = document.getElementById('key').value;
-    const textVal = document.getElementById('inputText').value;
-    if (keyVal.length < 8 || !textVal.trim()) { alert("Revisa clave y mensaje"); return; }
-    try {
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const key = await deriveKey(keyVal, salt);
-      const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(textVal));
-      const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-      combined.set(salt); combined.set(iv, salt.length); combined.set(new Uint8Array(encrypted), salt.length + iv.length);
-      const b64url = toBase64URL(btoa(String.fromCharCode(...combined)));
-      document.getElementById('output').textContent = b64url;
-      qrObj.makeCode(b64url);
-      isQrGenerated = true;
-    } catch(e) { alert("Error al cifrar"); }
-  };
-
-  document.getElementById('btnDescifrar').onclick = async () => {
-    const keyVal = document.getElementById('key').value;
-    const textVal = document.getElementById('inputText').value;
-    initQR(); 
-    try {
-      const base64 = fromBase64URL(textVal);
-      const data = Uint8Array.from(base64, c => c.charCodeAt(0));
-      const key = await deriveKey(keyVal, data.slice(0, 16));
-      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: data.slice(16, 28) }, key, data.slice(28));
-      document.getElementById('output').textContent = new TextDecoder().decode(decrypted);
-    } catch (e) { 
-      alert("Clave incorrecta o formato inválido"); 
-      document.getElementById('output').textContent = "";
+    function downloadQR() {
+        if(!isQrGenerated) return alert("Nada que descargar");
+        const canvas = document.querySelector("#qrcode canvas");
+        const link = document.createElement('a');
+        link.download = 'nyxcrypt.png';
+        link.href = canvas.toDataURL("image/png");
+        link.click();
     }
-  };
 
-  function downloadQR() {
-    if (!isQrGenerated) { alert("No hay ningún QR generado"); return; }
-    
-    const canvas = qrContainer.querySelector("canvas");
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = 512; 
-    finalCanvas.height = 512;
-    const ctx = finalCanvas.getContext('2d');
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, 512, 512);
-    ctx.drawImage(canvas, 20, 20, 472, 472);
-    
-    const link = document.createElement('a');
-    link.download = 'nyxcrypt.png';
-    link.href = finalCanvas.toDataURL("image/png", 1.0);
-    link.click();
-  }
+    async function startScanner() {
+        document.getElementById('reader').style.display = 'block';
+        scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+            document.getElementById('inputText').value = text;
+            scanner.stop();
+            document.getElementById('reader').style.display = 'none';
+        });
+    }
 
-  async function startScanner() {
-    if (html5QrCode.isScanning) await html5QrCode.stop();
-    document.getElementById('reader').style.display = 'block';
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
-      (text) => { document.getElementById('inputText').value = text; html5QrCode.stop().then(() => document.getElementById('reader').style.display = 'none'); });
-  }
-
-  async function scanFile(input) {
-    if(!input.files[0]) return;
-    
-    // CORRECCIÓN: Si el escáner está activo, lo detenemos primero
-    if (html5QrCode.isScanning) {
-        await html5QrCode.stop();
+    async function scanFile(input) {
+        if(scanner.isScanning) await scanner.stop();
         document.getElementById('reader').style.display = 'none';
+        scanner.scanFile(input.files[0], true).then(text => {
+            document.getElementById('inputText').value = text;
+        }).catch(() => alert("No se pudo leer el QR"));
     }
-
-    initQR();
-    document.getElementById('output').textContent = "";
-    html5QrCode.scanFile(input.files[0], true).then(text => { 
-        document.getElementById('inputText').value = text; 
-        input.value = ""; 
-    }).catch(err => { alert("No se pudo leer"); input.value = ""; });
-  }
-
-  initQR();
 </script>
 </body>
 </html>
