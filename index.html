@@ -27,16 +27,8 @@
   .extra-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
   .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
   
-  /* CAMBIO: Ancho igual a los textarea, alto más corto */
-  #reader { 
-    width: 100%; 
-    max-height: 250px; 
-    margin-top: 15px; 
-    display: none; 
-    border: 3px solid var(--gold); 
-    border-radius: 12px;
-    overflow: hidden;
-  }
+  /* REVERTIDO: Diseño original del reader para mantener proporciones */
+  #reader { width: 100%; margin-top: 10px; display: none; border: 2px solid var(--gold); }
 </style>
 </head>
 <body>
@@ -148,8 +140,7 @@
   async function startScanner() {
     if (html5QrCode.isScanning) await html5QrCode.stop();
     document.getElementById('reader').style.display = 'block';
-    // QRBOX ajustado para que sea proporcional al nuevo alto del lector
-    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (text) => { 
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => { 
         document.getElementById('inputText').value = text; 
         html5QrCode.stop().then(() => document.getElementById('reader').style.display = 'none'); 
     });
@@ -157,6 +148,7 @@
 
   async function scanFile(input) {
     if(!input.files[0]) return;
+    // Cierre automático al cargar archivo
     if (html5QrCode.isScanning) { await html5QrCode.stop(); document.getElementById('reader').style.display = 'none'; }
     initQR(); document.getElementById('output').textContent = "";
     html5QrCode.scanFile(input.files[0], true).then(text => { document.getElementById('inputText').value = text; input.value = ""; }).catch(err => { alert("No se pudo leer"); input.value = ""; });
