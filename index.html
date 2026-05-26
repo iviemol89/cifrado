@@ -68,14 +68,14 @@
 
 <script>
   let qrObj = null;
-  let isQrGenerated = false; // VARIABLE DE ESTADO
+  let isQrGenerated = false;
   const qrContainer = document.getElementById('qrcode');
   const html5QrCode = new Html5Qrcode("reader");
 
   function initQR() {
     qrContainer.innerHTML = "";
     qrObj = new QRCode(qrContainer, { width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
-    isQrGenerated = false; // Reset de estado
+    isQrGenerated = false;
   }
 
   function toggleVisibility() {
@@ -114,7 +114,7 @@
       const b64url = toBase64URL(btoa(String.fromCharCode(...combined)));
       document.getElementById('output').textContent = b64url;
       qrObj.makeCode(b64url);
-      isQrGenerated = true; // ACTIVAMOS ESTADO
+      isQrGenerated = true;
     } catch(e) { alert("Error al cifrar"); }
   };
 
@@ -135,21 +135,21 @@
   };
 
   function downloadQR() {
-    // AHORA VALIDAMOS POR ESTADO
-    if (isQrGenerated) {
-      const canvas = qrContainer.querySelector("canvas");
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = 512; finalCanvas.height = 512;
-      const ctx = finalCanvas.getContext('2d');
-      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 512, 512);
-      ctx.drawImage(canvas, 20, 20, 472, 472);
-      const link = document.createElement('a');
-      link.download = 'nyxcrypt.png';
-      link.href = finalCanvas.toDataURL("image/png", 1.0);
-      link.click();
-    } else { 
-      alert("No hay ningún QR generado para descargar."); 
-    }
+    if (!isQrGenerated) { alert("No hay ningún QR generado"); return; }
+    
+    const canvas = qrContainer.querySelector("canvas");
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = 512; 
+    finalCanvas.height = 512;
+    const ctx = finalCanvas.getContext('2d');
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.drawImage(canvas, 20, 20, 472, 472);
+    
+    const link = document.createElement('a');
+    link.download = 'nyxcrypt.png';
+    link.href = finalCanvas.toDataURL("image/png", 1.0);
+    link.click();
   }
 
   async function startScanner() {
@@ -159,8 +159,15 @@
       (text) => { document.getElementById('inputText').value = text; html5QrCode.stop().then(() => document.getElementById('reader').style.display = 'none'); });
   }
 
-  function scanFile(input) {
+  async function scanFile(input) {
     if(!input.files[0]) return;
+    
+    // CORRECCIÓN: Si el escáner está activo, lo detenemos primero
+    if (html5QrCode.isScanning) {
+        await html5QrCode.stop();
+        document.getElementById('reader').style.display = 'none';
+    }
+
     initQR();
     document.getElementById('output').textContent = "";
     html5QrCode.scanFile(input.files[0], true).then(text => { 
