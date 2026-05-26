@@ -32,7 +32,6 @@
 
 <div class="card">
   <h2>NYX Crypt</h2>
-  <div class="subtitle">Mensajes ocultos con clave secreta</div>
   <textarea id="inputText" rows="3"></textarea>
   <label>Clave secreta (mín. 8 caracteres)</label>
   <div class="password-wrapper">
@@ -47,7 +46,7 @@
   <div id="qrcode"></div>
   <div class="extra-buttons">
     <button class="btn-gold" onclick="downloadQR()">📥 Descargar QR</button>
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="scanFile(event)">
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="scanFile(this)">
     <button class="btn-gold" onclick="document.getElementById('fileInput').click()">📁 Cargar QR desde Archivo</button>
     <button class="btn-gold" onclick="startScanner()">📷 Escanear con Cámara</button>
   </div>
@@ -62,18 +61,6 @@
   function initQR() {
     qrContainer.innerHTML = "";
     qrObj = new QRCode(qrContainer, { width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
-  }
-
-  function clearUI() {
-    document.getElementById('output').textContent = "";
-    initQR();
-  }
-
-  async function stopScanner() {
-    if (html5QrCode.isScanning) {
-      await html5QrCode.stop().catch(() => {});
-    }
-    document.getElementById('reader').style.display = 'none';
   }
 
   function toggleVisibility() {
@@ -114,19 +101,23 @@
   document.getElementById('btnDescifrar').onclick = async () => {
     const keyVal = document.getElementById('key').value;
     const textVal = document.getElementById('inputText').value;
+    // Nueva mejora: Se elimina el QR al empezar a descifrar
+    initQR(); 
     try {
       const base64 = fromBase64URL(textVal);
       const data = Uint8Array.from(base64, c => c.charCodeAt(0));
       const key = await deriveKey(keyVal, data.slice(0, 16));
       const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: data.slice(16, 28) }, key, data.slice(28));
       document.getElementById('output').textContent = new TextDecoder().decode(decrypted);
-      initQR();
-    } catch (e) { alert("Clave incorrecta o formato inválido"); }
+    } catch (e) { 
+      alert("Clave incorrecta o formato inválido"); 
+      document.getElementById('output').textContent = "";
+    }
   };
 
   function downloadQR() {
     const canvas = qrContainer.querySelector("canvas");
-    if (canvas) {
+    if (canvas && document.getElementById('output').textContent !== "") {
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = 512; finalCanvas.height = 512;
       const ctx = finalCanvas.getContext('2d');
@@ -136,29 +127,27 @@
       link.download = 'nyxcrypt.png';
       link.href = finalCanvas.toDataURL("image/png", 1.0);
       link.click();
-    } else { alert("No hay QR"); }
+    } else { alert("No hay QR para descargar"); }
   }
 
   async function startScanner() {
-    await stopScanner();
-    clearUI();
+    if (html5QrCode.isScanning) await html5QrCode.stop();
     document.getElementById('reader').style.display = 'block';
-    html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, 
-      (text) => { 
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
+      (text) => { document.getElementById('inputText').value = text; html5QrCode.stop().then(() => document.getElementById('reader').style.display = 'none'); });
+  }
+
+  function scanFile(input) {
+    if(!input.files[0]) return;
+    initQR();
+    document.getElementById('output').textContent = "";
+    html5QrCode.scanFile(input.files[0], true).then(text => { 
         document.getElementById('inputText').value = text; 
-        stopScanner(); 
-      });
+        input.value = ""; 
+    }).catch(err => { alert("No se pudo leer"); input.value = ""; });
   }
 
-  async function scanFile(event) {
-    const file = event.target.files[0];
-    if(!file) return;
-    await stopScanner();
-    clearUI();
-    html5QrCode.scanFile(file, true).then(text => { document.getElementById('inputText').value = text; });
-  }
-
-  initQR(); // Inicialización al cargar la página
+  initQR();
 </script>
 </body>
 </html>
