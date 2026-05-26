@@ -68,26 +68,23 @@
 
 <script>
   let qrObj = null;
+  let isQrGenerated = false; // VARIABLE DE ESTADO
   const qrContainer = document.getElementById('qrcode');
   const html5QrCode = new Html5Qrcode("reader");
 
   function initQR() {
     qrContainer.innerHTML = "";
     qrObj = new QRCode(qrContainer, { width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
+    isQrGenerated = false; // Reset de estado
   }
 
   function toggleVisibility() {
     const key = document.getElementById('key');
     const eyeIcon = document.getElementById('eyeIcon');
-    
     key.type = (key.type === "password") ? "text" : "password";
-    
-    // Cambiamos el SVG según el estado
-    if (key.type === "password") {
-      eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
-    } else {
-      eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-    }
+    eyeIcon.innerHTML = (key.type === "password") 
+        ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>'
+        : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
   }
 
   const toBase64URL = (b) => b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -117,6 +114,7 @@
       const b64url = toBase64URL(btoa(String.fromCharCode(...combined)));
       document.getElementById('output').textContent = b64url;
       qrObj.makeCode(b64url);
+      isQrGenerated = true; // ACTIVAMOS ESTADO
     } catch(e) { alert("Error al cifrar"); }
   };
 
@@ -137,8 +135,9 @@
   };
 
   function downloadQR() {
-    const canvas = qrContainer.querySelector("canvas");
-    if (canvas && document.getElementById('output').textContent !== "") {
+    // AHORA VALIDAMOS POR ESTADO
+    if (isQrGenerated) {
+      const canvas = qrContainer.querySelector("canvas");
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = 512; finalCanvas.height = 512;
       const ctx = finalCanvas.getContext('2d');
@@ -148,7 +147,9 @@
       link.download = 'nyxcrypt.png';
       link.href = finalCanvas.toDataURL("image/png", 1.0);
       link.click();
-    } else { alert("No hay QR para descargar"); }
+    } else { 
+      alert("No hay ningún QR generado para descargar."); 
+    }
   }
 
   async function startScanner() {
