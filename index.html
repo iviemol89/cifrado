@@ -32,18 +32,25 @@
 
 <div class="card">
   <h2>NYX Crypt</h2>
+  <div class="subtitle">Mensajes ocultos con clave secreta</div>
+  
+  <label>Mensaje (o texto cifrado)</label>
   <textarea id="inputText" rows="3"></textarea>
+  
   <label>Clave secreta (mín. 8 caracteres)</label>
   <div class="password-wrapper">
     <input type="password" id="key" />
     <button type="button" id="togglePassword" onclick="toggleVisibility()">👁️</button>
   </div>
+  
   <div class="button-row">
     <button id="btnCifrar">Cifrar</button>
     <button id="btnDescifrar">Descifrar</button>
   </div>
+  
   <div id="output"></div>
   <div id="qrcode"></div>
+  
   <div class="extra-buttons">
     <button class="btn-gold" onclick="downloadQR()">📥 Descargar QR</button>
     <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="scanFile(this)">
@@ -101,7 +108,6 @@
   document.getElementById('btnDescifrar').onclick = async () => {
     const keyVal = document.getElementById('key').value;
     const textVal = document.getElementById('inputText').value;
-    // Nueva mejora: Se elimina el QR al empezar a descifrar
     initQR(); 
     try {
       const base64 = fromBase64URL(textVal);
